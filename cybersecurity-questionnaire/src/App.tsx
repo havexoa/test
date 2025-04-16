@@ -1,6 +1,9 @@
 import React from 'react';
 import { Container, CssBaseline, ThemeProvider, createTheme, AppBar, Toolbar, Typography } from '@mui/material';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Home from './components/Home';
 import Quiz from './components/Quiz';
+import Questionnaire from './components/Questionnaire';
 import cyboltLogo from './assets/cybolt-logo.png';
 
 const theme = createTheme({
@@ -33,25 +36,31 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AppBar position="static" color="primary">
-        <Toolbar>
-          <img
-            src={cyboltLogo}
-            alt="Cybolt Logo"
-            style={{
-              height: '40px',
-              marginRight: '16px',
-              filter: 'brightness(0) invert(1)'
-            }}
-          />
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Cybersecurity Maturity Assessment
-          </Typography>
-        </Toolbar>
-      </AppBar>
-      <Container maxWidth="lg">
-        <Quiz />
-      </Container>
+      <Router>
+        <AppBar position="static" color="primary">
+          <Toolbar>
+            <img
+              src={cyboltLogo}
+              alt="Cybolt Logo"
+              style={{
+                height: '40px',
+                marginRight: '16px',
+                filter: 'brightness(0) invert(1)'
+              }}
+            />
+            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+              Cybersecurity Assessment Platform
+            </Typography>
+          </Toolbar>
+        </AppBar>
+        <Container maxWidth="lg">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/quiz" element={<Quiz />} />
+            <Route path="/questionnaire" element={<Questionnaire />} />
+          </Routes>
+        </Container>
+      </Router>
     </ThemeProvider>
   );
 }

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
-import { questions } from '../data/questions';
+import { Question } from '../types';
 import cyboltLogo from '../assets/cybolt-logo.png';
 
 const styles = StyleSheet.create({
@@ -20,8 +20,12 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    color: '#1976d2',
-    flex: 1
+    color: '#ff6b00',
+    marginBottom: 20
+  },
+  userInfo: {
+    fontSize: 14,
+    marginBottom: 30
   },
   section: {
     marginBottom: 20
@@ -45,7 +49,7 @@ const styles = StyleSheet.create({
   summaryTitle: {
     fontSize: 16,
     marginBottom: 10,
-    color: '#1976d2'
+    color: '#ff6b00'
   },
   summaryText: {
     fontSize: 12,
@@ -56,17 +60,31 @@ const styles = StyleSheet.create({
 
 interface ReportPDFProps {
   answers: number[];
+  questions: Question[];
+  userInfo: {
+    name: string;
+    company: string;
+  };
   score: number;
   maturityLevel: string;
 }
 
-const ReportPDF: React.FC<ReportPDFProps> = ({ answers, score, maturityLevel }) => {
+const ReportPDF: React.FC<ReportPDFProps> = ({ answers, questions, userInfo, score, maturityLevel }) => {
+  const maxScore = questions.length * 5;
+  const percentage = (score / maxScore) * 100;
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           <Image src={cyboltLogo} style={styles.logo} />
         </View>
+        <Text style={styles.title}>Cybersecurity Maturity Assessment Report</Text>
+        <Text style={styles.userInfo}>
+          Name: {userInfo.name}
+          {'\n'}
+          Company: {userInfo.company}
+        </Text>
         
         <View style={styles.section}>
           {questions.map((question, index) => (
@@ -83,7 +101,7 @@ const ReportPDF: React.FC<ReportPDFProps> = ({ answers, score, maturityLevel }) 
 
         <View style={styles.summary}>
           <Text style={styles.summaryTitle}>Assessment Summary</Text>
-          <Text style={styles.summaryText}>Total Score: {score} / 35</Text>
+          <Text style={styles.summaryText}>Total Score: {score} / {maxScore} ({percentage.toFixed(1)}%)</Text>
           <Text style={styles.summaryText}>Maturity Level: {maturityLevel}</Text>
           <Text style={styles.summaryText}>
             Recommendation: Review your gaps and prioritize quick wins for visibility and control.

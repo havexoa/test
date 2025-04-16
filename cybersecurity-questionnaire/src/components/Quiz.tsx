@@ -1,116 +1,145 @@
 import React, { useState } from 'react';
-import { Box, Card, CardContent, Typography, Button, LinearProgress, Dialog } from '@mui/material';
-import { questions } from '../data/questions';
-import { QuizState } from '../types';
-import ReportPDF from './ReportPDF';
-import { PDFViewer } from '@react-pdf/renderer';
+import { Box, Button, Typography, Paper, Checkbox, FormControlLabel, FormGroup, Alert } from '@mui/material';
+import { quizQuestions } from '../data/quizQuestions';
+import { useNavigate } from 'react-router-dom';
 
 const Quiz: React.FC = () => {
-  const [quizState, setQuizState] = useState<QuizState>({
-    currentQuestion: 0,
-    answers: [],
-    score: 0
-  });
-  const [showPDF, setShowPDF] = useState(false);
+  const navigate = useNavigate();
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
+  const [showResults, setShowResults] = useState(false);
+  const [score, setScore] = useState(0);
 
-  const handleAnswer = (optionScore: number) => {
-    setQuizState(prev => ({
-      ...prev,
-      score: prev.score + optionScore,
-      answers: [...prev.answers, optionScore],
-      currentQuestion: prev.currentQuestion + 1
-    }));
+  const currentQuestionData = quizQuestions[currentQuestion];
+
+  const handleAnswerSelect = (index: number) => {
+    if (currentQuestionData.isMultipleChoice) {
+      setSelectedAnswers(prev => {
+        if (prev.includes(index)) {
+          return prev.filter(i => i !== index);
+        }
+        return [...prev, index];
+      });
+    } else {
+      setSelectedAnswers([index]);
+    }
   };
 
-  const getMaturityLevel = (score: number) => {
-    if (score >= 30) return "Advanced (Level 5)";
-    if (score >= 20) return "Good (Level 3-4)";
-    if (score >= 10) return "Basic (Level 2)";
-    return "Low (Level 0-1)";
+  const handleNext = () => {
+    if (selectedAnswers.length === 0) {
+      return;
+    }
+
+    const isCorrect = selectedAnswers.every(index => 
+      currentQuestionData.options[index].isCorrect
+    ) && selectedAnswers.length === currentQuestionData.options.filter(opt => opt.isCorrect).length;
+
+    if (isCorrect) {
+      setScore(prev => prev + 1);
+    }
+
+    if (currentQuestion < quizQuestions.length - 1) {
+      setCurrentQuestion(prev => prev + 1);
+      setSelectedAnswers([]);
+    } else {
+      setShowResults(true);
+    }
   };
 
-  const renderSummary = () => {
-    const maturityLevel = getMaturityLevel(quizState.score);
+  const handleRestart = () => {
+    setCurrentQuestion(0);
+    setSelectedAnswers([]);
+    setShowResults(false);
+    setScore(0);
+  };
 
+  if (showResults) {
     return (
-      <Card sx={{ maxWidth: 600, mx: 'auto', mt: 4, p: 2 }}>
-        <CardContent>
+      <Box sx={{ p: 3 }}>
+        <Paper elevation={3} sx={{ p: 4, mb: 3 }}>
           <Typography variant="h4" gutterBottom>
-            CyberQuest Summary
+            Quiz Complete!
           </Typography>
           <Typography variant="h6" gutterBottom>
-            🛡️ Total Score: {quizState.score} / 35
-          </Typography>
-          <Typography variant="h6" gutterBottom>
-            📊 Maturity Level: {maturityLevel}
+            Your Score: {score} out of {quizQuestions.length}
           </Typography>
           <Typography variant="body1" gutterBottom>
-            ⚠️ Recommendation: Review your gaps and prioritize quick wins for visibility and control.
+            Percentage: {((score / quizQuestions.length) * 100).toFixed(1)}%
           </Typography>
-          <Button 
-            variant="contained" 
-            sx={{ mt: 2 }}
-            onClick={() => setShowPDF(true)}
-          >
-            📜 Export Report
-          </Button>
-        </CardContent>
-      </Card>
+          <Box sx={{ mt: 3 }}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleRestart}
+              sx={{ mr: 2 }}
+            >
+              Try Again
+            </Button>
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={() => navigate('/')}
+            >
+              Back to Home
+            </Button>
+          </Box>
+        </Paper>
+      </Box>
     );
-  };
-
-  const progressPercentage = Math.round((quizState.currentQuestion / questions.length) * 100);
+  }
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.paper', p: 3 }}>
-      <Box sx={{ maxWidth: 600, mx: 'auto' }}>
-        <Box sx={{ mb: 2 }}>
-          <LinearProgress variant="determinate" value={progressPercentage} sx={{ height: 8, borderRadius: 4 }} />
-          <Typography variant="body2" sx={{ mt: 1 }}>
-            Progress: {progressPercentage}%
-          </Typography>
-        </Box>
-        {quizState.currentQuestion < questions.length ? (
-          <Card sx={{ mt: 3, p: 2 }}>
-            <CardContent>
-              <Typography variant="h5" gutterBottom>
-                {questions[quizState.currentQuestion].text}
-              </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-                {questions[quizState.currentQuestion].options.map((option, index) => (
-                  <Button
-                    key={index}
-                    variant="outlined"
-                    onClick={() => handleAnswer(option.score)}
-                    sx={{ justifyContent: 'flex-start', textAlign: 'left' }}
-                  >
-                    {option.text}
-                  </Button>
-                ))}
-              </Box>
-            </CardContent>
-          </Card>
-        ) : (
-          renderSummary()
-        )}
-      </Box>
-
-      <Dialog
-        open={showPDF}
-        onClose={() => setShowPDF(false)}
-        maxWidth="lg"
-        fullWidth
-      >
-        <Box sx={{ height: '80vh' }}>
-          <PDFViewer style={{ width: '100%', height: '100%' }}>
-            <ReportPDF
-              answers={quizState.answers}
-              score={quizState.score}
-              maturityLevel={getMaturityLevel(quizState.score)}
+    <Box sx={{ p: 3 }}>
+      <Paper elevation={3} sx={{ p: 4 }}>
+        <Typography variant="h6" gutterBottom>
+          Question {currentQuestion + 1} of {quizQuestions.length}
+        </Typography>
+        <Typography variant="h6" color="primary" gutterBottom>
+          {currentQuestionData.certification}
+        </Typography>
+        <Typography variant="h5" gutterBottom>
+          {currentQuestionData.text}
+        </Typography>
+        <FormGroup sx={{ mb: 3 }}>
+          {currentQuestionData.options.map((option, index) => (
+            <FormControlLabel
+              key={index}
+              control={
+                currentQuestionData.isMultipleChoice ? (
+                  <Checkbox
+                    checked={selectedAnswers.includes(index)}
+                    onChange={() => handleAnswerSelect(index)}
+                  />
+                ) : (
+                  <Checkbox
+                    checked={selectedAnswers.includes(index)}
+                    onChange={() => handleAnswerSelect(index)}
+                    name={`option-${index}`}
+                    type="radio"
+                  />
+                )
+              }
+              label={option.text}
             />
-          </PDFViewer>
+          ))}
+        </FormGroup>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+          <Button
+            variant="outlined"
+            onClick={() => navigate('/')}
+          >
+            Back to Home
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleNext}
+            disabled={selectedAnswers.length === 0}
+          >
+            {currentQuestion === quizQuestions.length - 1 ? 'Finish' : 'Next'}
+          </Button>
         </Box>
-      </Dialog>
+      </Paper>
     </Box>
   );
 };
