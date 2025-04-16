@@ -1,134 +1,161 @@
-import React, { useState } from 'react';
-import { Box, Button, Typography, Paper, Checkbox, FormControlLabel, FormGroup, Alert } from '@mui/material';
-import { quizQuestions } from '../data/quizQuestions';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Container, Typography, Button, Box, Radio, RadioGroup, FormControlLabel, FormControl, FormGroup, Checkbox, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Question } from '../types';
+import { securityPlusQuestions, cisspQuestions } from '../data/certificationQuestions';
 
-const Quiz: React.FC = () => {
+interface QuizProps {
+  assessmentType: 'security-plus' | 'cissp';
+}
+
+const Quiz: React.FC<QuizProps> = ({ assessmentType }) => {
   const navigate = useNavigate();
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
-  const [showResults, setShowResults] = useState(false);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
   const [score, setScore] = useState(0);
+  const [showCISSPDialog, setShowCISSPDialog] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const currentQuestionData = quizQuestions[currentQuestion];
-
-  const handleAnswerSelect = (index: number) => {
-    if (currentQuestionData.isMultipleChoice) {
-      setSelectedAnswers(prev => {
-        if (prev.includes(index)) {
-          return prev.filter(i => i !== index);
-        }
-        return [...prev, index];
-      });
+  useEffect(() => {
+    setIsLoading(true);
+    if (assessmentType === 'security-plus') {
+      setQuestions(securityPlusQuestions);
     } else {
-      setSelectedAnswers([index]);
+      setQuestions(cisspQuestions);
+    }
+    setIsLoading(false);
+  }, [assessmentType]);
+
+  const currentQuestion = questions[currentQuestionIndex];
+
+  const handleAnswerSelect = (answer: string) => {
+    if (!currentQuestion) return;
+    
+    if (currentQuestion.isMultipleChoice) {
+      setSelectedAnswers(prev => 
+        prev.includes(answer) 
+          ? prev.filter(a => a !== answer)
+          : [...prev, answer]
+      );
+    } else {
+      setSelectedAnswers([answer]);
     }
   };
 
   const handleNext = () => {
-    if (selectedAnswers.length === 0) {
-      return;
-    }
+    if (!currentQuestion) return;
 
-    const isCorrect = selectedAnswers.every(index => 
-      currentQuestionData.options[index].isCorrect
-    ) && selectedAnswers.length === currentQuestionData.options.filter(opt => opt.isCorrect).length;
+    const isCorrect = currentQuestion.options
+      .filter((option: { isCorrect: boolean }) => option.isCorrect)
+      .map((option: { text: string }) => option.text)
+      .every(answer => selectedAnswers.includes(answer));
 
     if (isCorrect) {
       setScore(prev => prev + 1);
     }
 
-    if (currentQuestion < quizQuestions.length - 1) {
-      setCurrentQuestion(prev => prev + 1);
+    // Check if we should show CISSP dialog after 10 questions
+    if (assessmentType === 'security-plus' && currentQuestionIndex === 9) {
+      const currentScore = isCorrect ? score + 1 : score;
+      const percentage = (currentScore / 10) * 100;
+      if (percentage >= 80) {
+        setShowCISSPDialog(true);
+        return;
+      }
+    }
+
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
       setSelectedAnswers([]);
     } else {
-      setShowResults(true);
+      navigate('/results', { state: { score, totalQuestions: questions.length } });
     }
   };
 
-  const handleRestart = () => {
-    setCurrentQuestion(0);
+  const handleCISSPContinue = () => {
+    setQuestions(prev => [...prev, ...cisspQuestions]);
+    setShowCISSPDialog(false);
+    setCurrentQuestionIndex(prev => prev + 1);
     setSelectedAnswers([]);
-    setShowResults(false);
-    setScore(0);
   };
 
-  if (showResults) {
+  const handleCISSPSkip = () => {
+    navigate('/results', { state: { score, totalQuestions: questions.length } });
+  };
+
+  if (isLoading || !currentQuestion) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Paper elevation={3} sx={{ p: 4, mb: 3 }}>
-          <Typography variant="h4" gutterBottom>
-            Quiz Complete!
-          </Typography>
-          <Typography variant="h6" gutterBottom>
-            Your Score: {score} out of {quizQuestions.length}
-          </Typography>
-          <Typography variant="body1" gutterBottom>
-            Percentage: {((score / quizQuestions.length) * 100).toFixed(1)}%
-          </Typography>
-          <Box sx={{ mt: 3 }}>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleRestart}
-              sx={{ mr: 2 }}
-            >
-              Try Again
-            </Button>
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={() => navigate('/')}
-            >
-              Back to Home
-            </Button>
-          </Box>
-        </Paper>
-      </Box>
+      <Container maxWidth="md">
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+          <CircularProgress />
+        </Box>
+      </Container>
     );
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Paper elevation={3} sx={{ p: 4 }}>
-        <Typography variant="h6" gutterBottom>
-          Question {currentQuestion + 1} of {quizQuestions.length}
-        </Typography>
-        <Typography variant="h6" color="primary" gutterBottom>
-          {currentQuestionData.certification}
-        </Typography>
-        <Typography variant="h5" gutterBottom>
-          {currentQuestionData.text}
-        </Typography>
-        <FormGroup sx={{ mb: 3 }}>
-          {currentQuestionData.options.map((option, index) => (
-            <FormControlLabel
-              key={index}
-              control={
-                currentQuestionData.isMultipleChoice ? (
-                  <Checkbox
-                    checked={selectedAnswers.includes(index)}
-                    onChange={() => handleAnswerSelect(index)}
-                  />
-                ) : (
-                  <Checkbox
-                    checked={selectedAnswers.includes(index)}
-                    onChange={() => handleAnswerSelect(index)}
-                    name={`option-${index}`}
-                    type="radio"
-                  />
-                )
-              }
-              label={option.text}
-            />
-          ))}
-        </FormGroup>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+    <Container maxWidth="md">
+      <Box sx={{ my: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h4" component="h1">
+            {assessmentType === 'security-plus' ? 'Security+ Assessment' : 'CISSP Assessment'}
+          </Typography>
           <Button
             variant="outlined"
+            color="primary"
             onClick={() => navigate('/')}
           >
-            Back to Home
+            Home
+          </Button>
+        </Box>
+        <Typography variant="h6" gutterBottom>
+          Question {currentQuestionIndex + 1} of {questions.length}
+        </Typography>
+        <Typography variant="body1" paragraph>
+          {currentQuestion.text}
+        </Typography>
+        <FormControl component="fieldset">
+          {currentQuestion.isMultipleChoice ? (
+            <FormGroup>
+              {currentQuestion.options.map((option: { text: string }) => (
+                <FormControlLabel
+                  key={option.text}
+                  control={
+                    <Checkbox
+                      checked={selectedAnswers.includes(option.text)}
+                      onChange={() => handleAnswerSelect(option.text)}
+                    />
+                  }
+                  label={option.text}
+                />
+              ))}
+            </FormGroup>
+          ) : (
+            <RadioGroup>
+              {currentQuestion.options.map((option: { text: string }) => (
+                <FormControlLabel
+                  key={option.text}
+                  value={option.text}
+                  control={
+                    <Radio
+                      checked={selectedAnswers.includes(option.text)}
+                      onChange={() => handleAnswerSelect(option.text)}
+                    />
+                  }
+                  label={option.text}
+                />
+              ))}
+            </RadioGroup>
+          )}
+        </FormControl>
+        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={() => navigate('/')}
+          >
+            Home
           </Button>
           <Button
             variant="contained"
@@ -136,11 +163,27 @@ const Quiz: React.FC = () => {
             onClick={handleNext}
             disabled={selectedAnswers.length === 0}
           >
-            {currentQuestion === quizQuestions.length - 1 ? 'Finish' : 'Next'}
+            {currentQuestionIndex < questions.length - 1 ? 'Next Question' : 'Finish'}
           </Button>
         </Box>
-      </Paper>
-    </Box>
+      </Box>
+
+      <Dialog open={showCISSPDialog} onClose={handleCISSPSkip}>
+        <DialogTitle>Congratulations!</DialogTitle>
+        <DialogContent>
+          <Typography>
+            You've scored {((score / 10) * 100).toFixed(0)}% on the Security+ questions!
+            Would you like to continue with CISSP certification questions?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCISSPSkip}>Skip CISSP Questions</Button>
+          <Button onClick={handleCISSPContinue} variant="contained" color="primary">
+            Continue with CISSP Questions
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Container>
   );
 };
 

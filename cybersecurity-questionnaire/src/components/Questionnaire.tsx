@@ -11,7 +11,11 @@ interface UserInfo {
   company: string;
 }
 
-const Questionnaire: React.FC = () => {
+interface QuestionnaireProps {
+  assessmentType: 'company' | 'quick' | 'detailed';
+}
+
+const Questionnaire: React.FC<QuestionnaireProps> = ({ assessmentType }) => {
   const navigate = useNavigate();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<number[]>(Array(questions.length).fill(-1));
@@ -19,8 +23,15 @@ const Questionnaire: React.FC = () => {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Filter questions based on assessment type
+  const filteredQuestions = questions.filter(question => 
+    assessmentType === 'quick' ? question.isQuickAssessment : true
+  );
+
   const handleStart = (name: string, company: string) => {
     setUserInfo({ name, company });
+    // Reset answers array with the correct length for filtered questions
+    setAnswers(Array(filteredQuestions.length).fill(-1));
   };
 
   const handleAnswer = (value: number) => {
@@ -35,7 +46,7 @@ const Questionnaire: React.FC = () => {
       setError('Please select an answer before proceeding');
       return;
     }
-    if (currentQuestion < questions.length - 1) {
+    if (currentQuestion < filteredQuestions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
     } else {
       setShowReport(true);
@@ -50,19 +61,19 @@ const Questionnaire: React.FC = () => {
 
   const handleRestart = () => {
     setCurrentQuestion(0);
-    setAnswers(Array(questions.length).fill(-1));
+    setAnswers(Array(filteredQuestions.length).fill(-1));
     setShowReport(false);
     setUserInfo(null);
     setError(null);
   };
 
   if (!userInfo) {
-    return <Welcome onStart={handleStart} />;
+    return <Welcome onStart={handleStart} assessmentType={assessmentType} />;
   }
 
   if (showReport) {
     const score = answers.reduce((sum, answer) => sum + (answer + 1), 0);
-    const maxScore = questions.length * 5;
+    const maxScore = filteredQuestions.length * 5;
     const percentage = (score / maxScore) * 100;
     let maturityLevel = '';
 
@@ -96,13 +107,12 @@ const Questionnaire: React.FC = () => {
               document={
                 <ReportPDF
                   answers={answers}
-                  questions={questions}
+                  questions={filteredQuestions}
                   userInfo={userInfo}
-                  score={score}
-                  maturityLevel={maturityLevel}
+                  assessmentType={assessmentType}
                 />
               }
-              fileName="cybersecurity-assessment.pdf"
+              fileName={`${userInfo.company}-cybersecurity-assessment.pdf`}
             >
               {({ loading }) => (
                 <Button
@@ -119,8 +129,16 @@ const Questionnaire: React.FC = () => {
               variant="outlined"
               color="primary"
               onClick={handleRestart}
+              sx={{ mr: 2 }}
             >
               Start New Assessment
+            </Button>
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={() => navigate('/')}
+            >
+              Back to Home
             </Button>
           </Box>
         </Paper>
@@ -131,23 +149,31 @@ const Questionnaire: React.FC = () => {
   return (
     <Box sx={{ p: 3 }}>
       <Paper elevation={3} sx={{ p: 4 }}>
+        <Typography variant="h4" gutterBottom>
+          {assessmentType === 'company' && 'Company Assessment'}
+          {assessmentType === 'quick' && 'Quick Assessment'}
+          {assessmentType === 'detailed' && 'Detailed Assessment'}
+        </Typography>
+        <Typography variant="body1">
+          This assessment is currently under development.
+        </Typography>
         <Typography variant="h6" gutterBottom>
-          Question {currentQuestion + 1} of {questions.length}
+          Question {currentQuestion + 1} of {filteredQuestions.length}
         </Typography>
         <Typography variant="h5" gutterBottom>
-          {questions[currentQuestion].text}
+          {filteredQuestions[currentQuestion].text}
         </Typography>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
-        <FormControl component="fieldset" sx={{ width: '100%', mb: 3 }}>
+        <FormControl component="fieldset">
           <RadioGroup
             value={answers[currentQuestion]}
             onChange={(e) => handleAnswer(Number(e.target.value))}
           >
-            {questions[currentQuestion].options.map((option, index) => (
+            {filteredQuestions[currentQuestion].options.map((option, index) => (
               <FormControlLabel
                 key={index}
                 value={index}
@@ -157,7 +183,7 @@ const Questionnaire: React.FC = () => {
             ))}
           </RadioGroup>
         </FormControl>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }}>
           <Button
             variant="outlined"
             onClick={handlePrevious}
@@ -170,7 +196,7 @@ const Questionnaire: React.FC = () => {
             color="primary"
             onClick={handleNext}
           >
-            {currentQuestion === questions.length - 1 ? 'Finish' : 'Next'}
+            {currentQuestion === filteredQuestions.length - 1 ? 'Finish' : 'Next'}
           </Button>
         </Box>
       </Paper>

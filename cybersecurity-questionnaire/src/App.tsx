@@ -1,9 +1,10 @@
 import React from 'react';
 import { Container, CssBaseline, ThemeProvider, createTheme, AppBar, Toolbar, Typography } from '@mui/material';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Home from './components/Home';
 import Quiz from './components/Quiz';
 import Questionnaire from './components/Questionnaire';
+import Results from './components/Results';
 import cyboltLogo from './assets/cybolt-logo.png';
 
 const theme = createTheme({
@@ -56,8 +57,12 @@ function App() {
         <Container maxWidth="lg">
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/quiz" element={<Quiz />} />
-            <Route path="/questionnaire" element={<Questionnaire />} />
+            <Route path="/company-assessment" element={<Questionnaire assessmentType="company" />} />
+            <Route path="/employee-assessment" element={<Quiz assessmentType="security-plus" />} />
+            <Route path="/cissp-assessment" element={<Quiz assessmentType="cissp" />} />
+            <Route path="/quick-assessment" element={<Questionnaire assessmentType="quick" />} />
+            <Route path="/detailed-assessment" element={<Questionnaire assessmentType="detailed" />} />
+            <Route path="/results" element={<Results />} />
           </Routes>
         </Container>
       </Router>

@@ -1,107 +1,111 @@
 import React from 'react';
-import { Box, Button, Typography, Paper, Grid } from '@mui/material';
+import { Box, Typography, Button, Paper } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '60vh',
-        p: 3
-      }}
-    >
-      <Paper
-        elevation={3}
-        sx={{
-          p: 4,
-          maxWidth: 800,
-          width: '100%',
-          borderRadius: 2
-        }}
-      >
-        <Typography variant="h4" component="h1" gutterBottom align="center">
+    <Box sx={{ 
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      p: 3,
+      background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)'
+    }}>
+      <Box sx={{ 
+        maxWidth: 1200,
+        width: '100%',
+        textAlign: 'center',
+        mb: 4
+      }}>
+        <Typography variant="h2" component="h1" gutterBottom sx={{ 
+          fontWeight: 'bold',
+          color: '#1a237e',
+          mb: 2
+        }}>
           Cybersecurity Assessment Platform
         </Typography>
-        <Typography variant="body1" gutterBottom align="center" sx={{ mb: 4 }}>
-          Choose an assessment type to begin
+        
+        <Typography variant="h5" sx={{ 
+          color: '#455a64',
+          mb: 4
+        }}>
+          Choose the type of assessment you want to perform
         </Typography>
         
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
-            <Paper
-              elevation={2}
+        <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' } }}>
+          <Paper
+            elevation={2}
+            sx={{
+              p: 3,
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              background: 'rgba(255, 255, 255, 0.9)',
+              backdropFilter: 'blur(10px)',
+              borderRadius: 2
+            }}
+          >
+            <Typography variant="h5" component="h2" gutterBottom sx={{ color: '#1a237e' }}>
+              Company Assessment
+            </Typography>
+            <Typography variant="body1" sx={{ mb: 3, textAlign: 'center' }}>
+              Evaluate your organization's cybersecurity maturity level and get actionable recommendations for improvement.
+            </Typography>
+            <Button
+              variant="contained"
+              size="large"
+              onClick={() => navigate('/company-assessment')}
               sx={{
-                p: 3,
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                textAlign: 'center',
-                cursor: 'pointer',
+                bgcolor: '#1a237e',
                 '&:hover': {
-                  backgroundColor: 'rgba(255, 107, 0, 0.05)'
+                  bgcolor: '#0d47a1'
                 }
               }}
-              onClick={() => navigate('/questionnaire')}
             >
-              <Typography variant="h5" gutterBottom>
-                Maturity Assessment
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Evaluate your organization's cybersecurity maturity level
-              </Typography>
-              <Button
-                variant="contained"
-                color="primary"
-                fullWidth
-              >
-                Start Assessment
-              </Button>
-            </Paper>
-          </Grid>
+              Start Company Assessment
+            </Button>
+          </Paper>
           
-          <Grid item xs={12} md={6}>
-            <Paper
-              elevation={2}
+          <Paper
+            elevation={2}
+            sx={{
+              p: 3,
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              background: 'rgba(255, 255, 255, 0.9)',
+              backdropFilter: 'blur(10px)',
+              borderRadius: 2
+            }}
+          >
+            <Typography variant="h5" component="h2" gutterBottom sx={{ color: '#1a237e' }}>
+              Employee Assessment
+            </Typography>
+            <Typography variant="body1" sx={{ mb: 3, textAlign: 'center' }}>
+              Test your cybersecurity knowledge with certification-style questions from CompTIA Security+ and CISSP.
+            </Typography>
+            <Button
+              variant="contained"
+              size="large"
+              onClick={() => navigate('/employee-assessment')}
               sx={{
-                p: 3,
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                textAlign: 'center',
-                cursor: 'pointer',
+                bgcolor: '#1a237e',
                 '&:hover': {
-                  backgroundColor: 'rgba(255, 107, 0, 0.05)'
+                  bgcolor: '#0d47a1'
                 }
               }}
-              onClick={() => navigate('/quiz')}
             >
-              <Typography variant="h5" gutterBottom>
-                Certification Quiz
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Practice questions for Security+ and CISSP certifications
-              </Typography>
-              <Button
-                variant="contained"
-                color="primary"
-                fullWidth
-              >
-                Start Quiz
-              </Button>
-            </Paper>
-          </Grid>
-        </Grid>
-      </Paper>
+              Start Employee Assessment
+            </Button>
+          </Paper>
+        </Box>
+      </Box>
     </Box>
   );
 };
