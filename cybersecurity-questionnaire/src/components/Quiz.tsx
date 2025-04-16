@@ -3,10 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import { Container, Typography, Button, Box, Radio, RadioGroup, FormControlLabel, FormControl, FormGroup, Checkbox, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import { Question } from '../types';
 import { securityPlusQuestions, cisspQuestions } from '../data/certificationQuestions';
+import { additionalSecurityPlusQuestions, additionalCISSPQuestions } from '../data/additionalQuestions';
 
 interface QuizProps {
   assessmentType: 'security-plus' | 'cissp';
 }
+
+// Fisher-Yates shuffle algorithm
+const shuffleArray = <T,>(array: T[]): T[] => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
 
 const Quiz: React.FC<QuizProps> = ({ assessmentType }) => {
   const navigate = useNavigate();
@@ -19,11 +30,25 @@ const Quiz: React.FC<QuizProps> = ({ assessmentType }) => {
 
   useEffect(() => {
     setIsLoading(true);
+    let allQuestions: Question[];
+    
     if (assessmentType === 'security-plus') {
-      setQuestions(securityPlusQuestions);
+      // Combine and shuffle Security+ questions
+      const combinedQuestions = [...securityPlusQuestions, ...additionalSecurityPlusQuestions];
+      allQuestions = shuffleArray(combinedQuestions).slice(0, 10);
     } else {
-      setQuestions(cisspQuestions);
+      // Use CISSP questions
+      const combinedQuestions = [...cisspQuestions, ...additionalCISSPQuestions];
+      allQuestions = shuffleArray(combinedQuestions).slice(0, 10);
     }
+
+    // Shuffle options for each question
+    const questionsWithShuffledOptions = allQuestions.map(question => ({
+      ...question,
+      options: shuffleArray(question.options)
+    }));
+
+    setQuestions(questionsWithShuffledOptions);
     setIsLoading(false);
   }, [assessmentType]);
 
@@ -47,8 +72,8 @@ const Quiz: React.FC<QuizProps> = ({ assessmentType }) => {
     if (!currentQuestion) return;
 
     const isCorrect = currentQuestion.options
-      .filter((option: { isCorrect: boolean }) => option.isCorrect)
-      .map((option: { text: string }) => option.text)
+      .filter(option => option.isCorrect)
+      .map(option => option.text)
       .every(answer => selectedAnswers.includes(answer));
 
     if (isCorrect) {
@@ -74,7 +99,15 @@ const Quiz: React.FC<QuizProps> = ({ assessmentType }) => {
   };
 
   const handleCISSPContinue = () => {
-    setQuestions(prev => [...prev, ...cisspQuestions]);
+    // Add 10 random CISSP questions
+    const randomCISSPQuestions = shuffleArray([...cisspQuestions, ...additionalCISSPQuestions])
+      .slice(0, 10)
+      .map(question => ({
+        ...question,
+        options: shuffleArray(question.options)
+      }));
+
+    setQuestions(prev => [...prev, ...randomCISSPQuestions]);
     setShowCISSPDialog(false);
     setCurrentQuestionIndex(prev => prev + 1);
     setSelectedAnswers([]);
@@ -118,7 +151,7 @@ const Quiz: React.FC<QuizProps> = ({ assessmentType }) => {
         <FormControl component="fieldset">
           {currentQuestion.isMultipleChoice ? (
             <FormGroup>
-              {currentQuestion.options.map((option: { text: string }) => (
+              {currentQuestion.options.map((option) => (
                 <FormControlLabel
                   key={option.text}
                   control={
@@ -133,7 +166,7 @@ const Quiz: React.FC<QuizProps> = ({ assessmentType }) => {
             </FormGroup>
           ) : (
             <RadioGroup>
-              {currentQuestion.options.map((option: { text: string }) => (
+              {currentQuestion.options.map((option) => (
                 <FormControlLabel
                   key={option.text}
                   value={option.text}
