@@ -1,11 +1,12 @@
 import React from 'react';
 import { Container, CssBaseline, ThemeProvider, createTheme, AppBar, Toolbar, Typography } from '@mui/material';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './components/Home';
 import Quiz from './components/Quiz';
 import Questionnaire from './components/Questionnaire';
 import Results from './components/Results';
 import cyboltLogo from './assets/cybolt-logo.png';
+import theme from './theme';
 
 const theme = createTheme({
   palette: {
@@ -37,7 +38,7 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Router>
+      <Router basename={process.env.PUBLIC_URL}>
         <AppBar position="static" color="primary">
           <Toolbar>
             <img
@@ -63,6 +64,7 @@ function App() {
             <Route path="/quick-assessment" element={<Questionnaire assessmentType="quick" />} />
             <Route path="/detailed-assessment" element={<Questionnaire assessmentType="detailed" />} />
             <Route path="/results" element={<Results />} />
+            <Route path="*" element={<Home />} />
           </Routes>
         </Container>
       </Router>
