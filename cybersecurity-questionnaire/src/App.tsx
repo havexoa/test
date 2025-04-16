@@ -6,9 +6,8 @@ import Quiz from './components/Quiz';
 import Questionnaire from './components/Questionnaire';
 import Results from './components/Results';
 import cyboltLogo from './assets/cybolt-logo.png';
-import theme from './theme';
 
-const theme = createTheme({
+const appTheme = createTheme({
   palette: {
     mode: 'light',
     primary: {
@@ -36,7 +35,7 @@ const theme = createTheme({
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={appTheme}>
       <CssBaseline />
       <Router>
         <AppBar position="static" color="primary">
